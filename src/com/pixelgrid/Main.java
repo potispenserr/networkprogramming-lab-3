@@ -8,40 +8,90 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.net.SocketException;
 
 public class Main {
 
-    public static void main(String[] args) {
+    public JFrame jFrame = new JFrame("Twitch plays pixel art");
+    public SquarePanel squarePanel = new SquarePanel();
+
+    public static void main(String[] args) throws SocketException {
 	// write your code here aka Do stuff
+        Main mainObj = new Main();
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                createAndShowGUI();
+                mainObj.createAndShowGUI();
             }
+
         });
+        EchoServer echoServer = null;
+        try {
+            echoServer = new EchoServer();
+        }
+        catch (SocketException e) {
+            e.printStackTrace();
+        }
+        echoServer.start();
+        while (true) {
+
+            if (echoServer.isAlive() == true) {
+                //System.out.println("i'm still standing");
+            } else {
+                System.out.println("thread is kill");
+                try {
+                    echoServer.join();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                String[] udpStringSplit = echoServer.getDataString();
+                System.out.println(echoServer.isAlive());
+                System.out.println("udpStringSplit is this long " + udpStringSplit.length);
+                Color udpColor = null;
+                switch (udpStringSplit[3]){
+                    case "Black": udpColor = Color.BLACK; break;
+                    case "Blue": udpColor = Color.BLUE; break;
+                    case "Magenta": udpColor = Color.MAGENTA; break;
+                    case "White": udpColor = Color.white; break;
+                    case "Green": udpColor = Color.GREEN; break;
+                    case "Yellow": udpColor = Color.YELLOW; break;
+                    case "Red": udpColor = Color.red; break;
+                    case "Cyan": udpColor = Color.cyan; break;
+
+
+                }
+                System.out.println("Changing pixel at X: " + udpStringSplit[1] + " Y: " + udpStringSplit[2] + " with the color " + udpColor.toString());
+                mainObj.squarePanel.changePixelColorUDP(Integer.parseInt(udpStringSplit[1]), Integer.parseInt(udpStringSplit[2]), udpColor);
+
+                echoServer = new EchoServer();
+                echoServer.start();
+
+            }
+
+        }
     }
 
-    private static void createAndShowGUI() {
+    private void createAndShowGUI() {
         System.out.println("Created GUI on EDT? "+
                 SwingUtilities.isEventDispatchThread());
-        JFrame f = new JFrame("Swing Paint Demo");
-        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        f.setSize(1200, 700);
-        f.add(new KankerPanel());
-        f.pack();
-        f.setVisible(true);
-        f.setLocationRelativeTo(null);
-        f.setResizable(false);
+
+        jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        jFrame.setSize(1200, 700);
+        jFrame.add(squarePanel);
+        jFrame.pack();
+        jFrame.setVisible(true);
+        jFrame.setLocationRelativeTo(null);
+        jFrame.setResizable(false);
     }
 }
 
-class KankerPanel extends JPanel {
+class SquarePanel extends JPanel {
     private int squareX = 50;
     private int squareY = 50;
     private int squareW = 3;
     private int squareH = 20;
     private Pixel[][] grid = new Pixel[201][201];
 
-    public KankerPanel() {
+    public SquarePanel() {
         setBorder(BorderFactory.createLineBorder(Color.black));
         int startX = 0, startY = 0, counter = 1;
         for(int row = 0; row < 201; row++){
@@ -52,7 +102,7 @@ class KankerPanel extends JPanel {
                 grid[row][col].y = startY;
                 grid[row][col].color = Color.BLUE;
                 grid[row][col].width = squareW;
-                System.out.println("created pixel at X: " + grid[row][col].x + " Y: " + grid[row][col].y);
+                //System.out.println("created pixel at X: " + grid[row][col].x + " Y: " + grid[row][col].y);
                 startY += squareW;
                 counter++;
             }
@@ -108,6 +158,10 @@ class KankerPanel extends JPanel {
         grid[clickedX][clickedY].color = randomColor;
         repaint(grid[clickedX][clickedY].x, grid[clickedX][clickedY].y, grid[clickedX][clickedY].width, grid[clickedX][clickedY].width);
 
+    }
+    public void changePixelColorUDP(int x, int y, Color color){
+        grid[x][y].color = color;
+        repaint(grid[x][y].x, grid[x][y].y, grid[x][y].width, grid[x][y].width);
     }
 
     private void moveSquare(int x, int y) {
