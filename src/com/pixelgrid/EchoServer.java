@@ -7,6 +7,17 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.Arrays;
 
+
+/**
+ * EchoServer handles all UDP communication
+ * DatagramSocket Socket
+ * bool running
+ * byte[256] buf
+ * String[] dataStringSplit
+ * Ruben Wvwc
+ * Version 1.0
+ * 09-11-2021
+ */
 public class EchoServer extends Thread {
 
     private DatagramSocket socket;
@@ -17,6 +28,12 @@ public class EchoServer extends Thread {
     public EchoServer() throws SocketException {
         socket = new DatagramSocket(4445);
     }
+
+    /**
+     * run() takes no arguments
+     * The method listens for a Datagram packet and if it gets one it returns the same data as a response
+     * It splits up the data and assigns it to dataStringSplit. Depending of what the first string is it exits the loop which in turn kills the thread
+     */
     @Override
     public void run() {
         running = true;
@@ -49,20 +66,28 @@ public class EchoServer extends Thread {
                 running = false;
                 continue;
             }
-            if (dataStringSplit[0].equals("Action")){
-                System.out.println("It's action time");
-                running = false;
-                continue;
-            }
+            // send echo response
             try {
                 socket.send(packet);
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            //clear buffer
             Arrays.fill(buf, (byte) '\n');
+
+
+            if (dataStringSplit[0].equals("Action")){
+                System.out.println("It's action time");
+                running = false;
+                continue;
+            }
         }
         socket.close();
     }
+
+    /**
+     * @return dataStringSplit
+     */
     public String[] getDataString() {
         return dataStringSplit;
     }

@@ -10,11 +10,26 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.net.SocketException;
 
+/**
+ * Main is where everything starts
+ * JFrame jFrame
+ * SquarePanel squarePanel
+ * Ruben Wvwc
+ * Version 1.0
+ * 09-11-2021
+ */
 public class Main {
 
     public JFrame jFrame = new JFrame("Twitch plays pixel art");
     public SquarePanel squarePanel = new SquarePanel();
 
+    /**
+     * Starts up the GUI and UDP server
+     * WHen the UDP server thread dies that is to say when it receives a valid package it gets the data from dataStringSplit from Echoserver
+     * Then calls the changePixelColor on the squarePanel with the instructions in the packet and restarts the EchoServer thread
+     * @param args
+     * @throws SocketException
+     */
     public static void main(String[] args) throws SocketException {
 	// write your code here aka Do stuff
         Main mainObj = new Main();
@@ -70,6 +85,9 @@ public class Main {
         }
     }
 
+    /**
+     * Starts up and initializes the GUI
+     */
     private void createAndShowGUI() {
         System.out.println("Created GUI on EDT? "+
                 SwingUtilities.isEventDispatchThread());
@@ -84,14 +102,22 @@ public class Main {
     }
 }
 
+/**
+ * SquarePanel contains the grid of pixels and methods to manipulate them
+ * int squareW: square width
+ * Pixel[][] grid: holds all pixels
+ * Ruben Wvwc
+ * Version 1.0
+ * 09-11-2021
+ */
 class SquarePanel extends JPanel {
-    private int squareX = 50;
-    private int squareY = 50;
     private int squareW = 3;
-    private int squareH = 20;
     private Pixel[][] grid = new Pixel[201][201];
 
-    public SquarePanel() {
+    /**
+     * initializes all Pixels in grid and adds mouse control
+     */
+    SquarePanel() {
         setBorder(BorderFactory.createLineBorder(Color.black));
         int startX = 0, startY = 0, counter = 1;
         for(int row = 0; row < 201; row++){
@@ -126,11 +152,16 @@ class SquarePanel extends JPanel {
 
         addMouseMotionListener(new MouseAdapter() {
             public void mouseDragged(MouseEvent e) {
-                moveSquare(e.getX(),e.getY());
+
             }
         });
     }
 
+    /**
+     * Takes clicked x and y coordinate and assings that pixel a random color
+     * @param x coordinate
+     * @param y coordinate
+     */
     private void changePixelColor(int x, int y) {
         int clickedX = Math.floorDiv(x, squareW);
         int clickedY = Math.floorDiv(y, squareW);
@@ -159,25 +190,31 @@ class SquarePanel extends JPanel {
         repaint(grid[clickedX][clickedY].x, grid[clickedX][clickedY].y, grid[clickedX][clickedY].width, grid[clickedX][clickedY].width);
 
     }
+
+    /**
+     * Changes the pixel at the x and y coordinates to the provided color
+     * @param x coordinate from UDP packet
+     * @param y coordinate from UDP packet
+     * @param color from UDP packet
+     */
     public void changePixelColorUDP(int x, int y, Color color){
         grid[x][y].color = color;
         repaint(grid[x][y].x, grid[x][y].y, grid[x][y].width, grid[x][y].width);
     }
 
-    private void moveSquare(int x, int y) {
-        int OFFSET = 1;
-        if ((squareX!=x) || (squareY!=y)) {
-            repaint(squareX,squareY,squareW+OFFSET,squareH+OFFSET);
-            squareX=x;
-            squareY=y;
-            repaint(squareX,squareY,squareW+OFFSET,squareH+OFFSET);
-        }
-    }
-
+    /**
+     *
+     * @return appropriate window size
+     */
     public Dimension getPreferredSize() {
         return new Dimension(600,600);
     }
 
+
+    /**
+     * Draws all pixels
+     * @param g
+     */
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 

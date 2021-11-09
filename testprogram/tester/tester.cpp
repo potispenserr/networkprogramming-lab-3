@@ -2,16 +2,16 @@
 #include <string>
 #include <winsock2.h>
 
-#pragma comment(lib,"ws2_32.lib") // Winsock Library
+#pragma comment(lib,"ws2_32.lib")
 #pragma warning(disable:4996) 
 
-#define SERVER "127.0.0.1"  // or "localhost" - ip address of UDP server
-#define BUFLEN 512  // max length of answerfer
+#define SERVER "127.0.0.1"  // server IP
+#define BUFLEN 512  // max length of data to send and receieve
 #define PORT 4445  // the port on which to listen for incoming data
 
 int main()
 {
-    system("title UDP Client");
+    system("title UDP Client for Twitch plays pixel art");
 
     // initialise winsock
     WSADATA wsa;
@@ -26,7 +26,7 @@ int main()
     // create socket
     sockaddr_in client;
     int s, slen = sizeof(client);
-    if ((s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == SOCKET_ERROR) // UDP Socket!
+    if ((s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == SOCKET_ERROR)
     {
         printf("socket() failed with error code: %d", WSAGetLastError());
         return 2;
@@ -41,7 +41,6 @@ int main()
     // start communication
     while (true)
     {
-        //char message[BUFLEN];
         std::string input;
         std::string message;
         printf("Enter Command: ");
@@ -62,9 +61,10 @@ int main()
             return 3;
         }
         message.clear();
+        break;
 
         // receive a reply and print it
-        // clear the answerfer by filling null, it might have previously received data
+        // clear the answer by filling null, it might have previously received data
         //char answer[BUFLEN];
         //memset(answer, '\0', BUFLEN);
         //// try to receive some data, this is a blocking call
@@ -80,5 +80,5 @@ int main()
     closesocket(s);
     WSACleanup();
 
-    return 0;
+    return 1;
 }
