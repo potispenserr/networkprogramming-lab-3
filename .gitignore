@@ -31,3 +31,4 @@ testprogram/tester/.vs/
 #Nuget packages folder
 packages/
 testprogram/tester/Debug/*
+out/

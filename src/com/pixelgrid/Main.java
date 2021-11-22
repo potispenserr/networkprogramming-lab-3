@@ -9,6 +9,9 @@ import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.net.SocketException;
+import java.util.Dictionary;
+import java.util.Enumeration;
+import java.util.Hashtable;
 
 /**
  * Main is where everything starts
@@ -66,7 +69,7 @@ public class Main {
                     case "Black": udpColor = Color.BLACK; break;
                     case "Blue": udpColor = Color.BLUE; break;
                     case "Magenta": udpColor = Color.MAGENTA; break;
-                    case "White": udpColor = Color.white; break;
+                    case "Orange": udpColor = Color.ORANGE; break;
                     case "Green": udpColor = Color.GREEN; break;
                     case "Yellow": udpColor = Color.YELLOW; break;
                     case "Red": udpColor = Color.red; break;
@@ -74,8 +77,14 @@ public class Main {
 
 
                 }
-                System.out.println("Changing pixel at X: " + udpStringSplit[1] + " Y: " + udpStringSplit[2] + " with the color " + udpColor.toString());
-                mainObj.squarePanel.changePixelColorUDP(Integer.parseInt(udpStringSplit[1]), Integer.parseInt(udpStringSplit[2]), udpColor);
+                if(udpStringSplit[0].equals("Leave")){
+                    System.out.println("Player left");
+                    mainObj.squarePanel.removePlayer(udpColor);
+                }
+                else if(udpStringSplit[0].equals("Action")) {
+                    System.out.println("Changing pixel at X: " + udpStringSplit[1] + " Y: " + udpStringSplit[2] + " with the color " + udpColor.toString());
+                    mainObj.squarePanel.changePixelColorUDP(Integer.parseInt(udpStringSplit[1]), Integer.parseInt(udpStringSplit[2]), udpColor);
+                }
 
                 echoServer = new EchoServer();
                 echoServer.start();
@@ -102,6 +111,17 @@ public class Main {
     }
 }
 
+class Player {
+    Color color;
+    int x;
+    int y;
+    Player(Color newColor, int newX, int newY){
+        color = newColor;
+        x = newX;
+        y = newY;
+    }
+}
+
 /**
  * SquarePanel contains the grid of pixels and methods to manipulate them
  * int squareW: square width
@@ -113,12 +133,14 @@ public class Main {
 class SquarePanel extends JPanel {
     private int squareW = 3;
     private Pixel[][] grid = new Pixel[201][201];
+    public Dictionary<Color, Player> playerList = new Hashtable<Color, Player>();
+
 
     /**
      * initializes all Pixels in grid and adds mouse control
      */
     SquarePanel() {
-        setBorder(BorderFactory.createLineBorder(Color.black));
+        //setBorder(BorderFactory.createLineBorder(Color.black));
         int startX = 0, startY = 0, counter = 1;
         for(int row = 0; row < 201; row++){
             for(int col = 0; col < 201; col++){
@@ -126,7 +148,7 @@ class SquarePanel extends JPanel {
                 grid[row][col].count = counter;
                 grid[row][col].x = startX;
                 grid[row][col].y = startY;
-                grid[row][col].color = Color.BLUE;
+                grid[row][col].color = Color.WHITE;
                 grid[row][col].width = squareW;
                 //System.out.println("created pixel at X: " + grid[row][col].x + " Y: " + grid[row][col].y);
                 startY += squareW;
@@ -136,6 +158,17 @@ class SquarePanel extends JPanel {
             startX += squareW;
 
         }
+        playerList.put(Color.BLACK, new Player(Color.BLACK, -1, -1));
+        playerList.put(Color.BLUE, new Player(Color.BLUE, -1, -1));
+        playerList.put(Color.MAGENTA, new Player(Color.MAGENTA, -1, -1));
+        playerList.put(Color.white, new Player(Color.white, -1, -1));
+        playerList.put(Color.green, new Player(Color.green, -1, -1));
+        playerList.put(Color.yellow, new Player(Color.YELLOW, -1, -1));
+        playerList.put(Color.red, new Player(Color.red, -1, -1));
+        playerList.put(Color.cyan, new Player(Color.cyan, -1, -1));
+        playerList.put(Color.ORANGE, new Player(Color.ORANGE, -1, -1));
+
+
 
         addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
@@ -198,8 +231,35 @@ class SquarePanel extends JPanel {
      * @param color from UDP packet
      */
     public void changePixelColorUDP(int x, int y, Color color){
+        Player player = playerList.get(color);
+        int oldX = player.x;
+        int oldY = player.y;
+
+        player.x = x;
+        player.y = y;
         grid[x][y].color = color;
         repaint(grid[x][y].x, grid[x][y].y, grid[x][y].width, grid[x][y].width);
+
+        if(oldX >= 0 || oldY >= 0){
+            grid[oldX][oldY].color = Color.BLUE;
+            repaint(grid[oldX][oldY].x, grid[oldX][oldY].y, grid[oldX][oldY].width, grid[oldX][oldY].width);
+        }
+
+    }
+    public void removePlayer(Color color){
+        Player player = playerList.get(color);
+
+        System.out.println("Removing player color" + player.color);
+
+        int oldX = player.x;
+        int oldY = player.y;
+
+        player.x = -1;
+        player.y = -1;
+
+        grid[oldX][oldY].color = Color.BLUE;
+        repaint(grid[oldX][oldY].x, grid[oldX][oldY].y, grid[oldX][oldY].width, grid[oldX][oldY].width);
+
     }
 
     /**
@@ -232,6 +292,20 @@ class SquarePanel extends JPanel {
                 g.setColor(pixel.color);
                 g.fillRect(pixel.x, pixel.y, pixel.width, pixel.width);
             }
+        }
+        /*for (Player player : playerlist){
+            if(player.x == -1 || player.y == -1){
+                continue;
+            }
+            grid[player.x][player.y].color = player.color;
+        }*/
+        for (Enumeration<Player> players = playerList.elements(); players.hasMoreElements();) {
+            Player player = players.nextElement();
+            if(player.x == -1 || player.y == -1){
+                continue;
+            }
+            grid[player.x][player.y].color = player.color;
+            System.out.println("PlayerColor: " + player.color + " X:" + player.x + " Y: " + player.y);
         }
     }
 }

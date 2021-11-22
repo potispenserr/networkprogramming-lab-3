@@ -81,6 +81,12 @@ public class EchoServer extends Thread {
                 running = false;
                 continue;
             }
+
+            if (dataStringSplit[0].equals("Leave")){
+                System.out.println("It's leaving time");
+                running = false;
+                continue;
+            }
         }
         socket.close();
     }
